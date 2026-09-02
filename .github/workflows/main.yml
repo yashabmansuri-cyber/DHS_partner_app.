@@ -1,0 +1,40 @@
+name: Build DHS Partner APK
+
+on:
+  push:
+    paths:
+      - 'DHS-Part-*.bin'
+      - 'DHS-Partner-Updated-Part-*.bin'
+      - '.github/workflows/main.yml'
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Rebuild project ZIP from 5 parts
+        run: |
+          cat DHS-Partner-Updated-Part-1.bin DHS-Partner-Updated-Part-2.bin DHS-Partner-Updated-Part-3.bin DHS-Partner-Updated-Part-4.bin DHS-Partner-Updated-Part-5.bin > project.zip || cat DHS-Part-1.bin DHS-Part-2.bin DHS-Part-3.bin DHS-Part-4.bin DHS-Part-5.bin > project.zip
+          unzip -q project.zip -d project
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Build APK
+        working-directory: project
+        run: gradle --no-daemon assembleDebug
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: DHS-Partner-APK
+          path: project/app/build/outputs/apk/**/*.apk
